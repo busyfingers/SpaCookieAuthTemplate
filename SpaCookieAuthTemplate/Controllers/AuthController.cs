@@ -15,7 +15,9 @@ namespace SpaCookieAuthTemplate.Controllers
         private readonly SignInManager<IdentityUser> signInManager;
         private readonly IAntiforgery antiforgery;
 
-        public AuthController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IAntiforgery antiforgery)
+        public AuthController(UserManager<IdentityUser> userManager,
+            SignInManager<IdentityUser> signInManager,
+            IAntiforgery antiforgery)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
@@ -55,7 +57,6 @@ namespace SpaCookieAuthTemplate.Controllers
             return Ok(user);
         }
 
-
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] UserCredentials credentials)
         {
@@ -64,7 +65,11 @@ namespace SpaCookieAuthTemplate.Controllers
                 return Ok();
             }
 
-            var result = await signInManager.PasswordSignInAsync(credentials.Email, credentials.Password, isPersistent: true, lockoutOnFailure: false);
+            var result = await signInManager
+                .PasswordSignInAsync(credentials.Email,
+                    credentials.Password,
+                    isPersistent: true,
+                    lockoutOnFailure: false);
 
             if (!result.Succeeded)
             {
@@ -85,4 +90,3 @@ namespace SpaCookieAuthTemplate.Controllers
         }
     }
 }
-

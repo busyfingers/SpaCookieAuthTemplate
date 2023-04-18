@@ -7,7 +7,6 @@ namespace SpaCookieAuthTemplate.Middleware
     {
         private readonly RequestDelegate _next;
 
-
         public CsrfRefreshMiddleware(RequestDelegate next)
         {
             _next = next;
@@ -21,4 +20,3 @@ namespace SpaCookieAuthTemplate.Middleware
         }
     }
 }
-
