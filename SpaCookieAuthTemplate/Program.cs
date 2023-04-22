@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SpaCookieAuthTemplate.Database;
-using SpaCookieAuthTemplate.Helpers;
+using SpaCookieAuthTemplate.Helpers.Settings;
 using SpaCookieAuthTemplate.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +22,36 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
+var google = new Google();
+builder.Configuration
+    .GetSection(Authentication.SectionName)
+    .GetSection(Google.SectionName)
+    .Bind(google);
+
+builder.Services.AddAuthentication()
+    .AddGoogle(googleOptions =>
+    {
+        googleOptions.ClientId = google.ClientId;
+        googleOptions.ClientSecret = google.ClientSecret;
+        googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
+        googleOptions.Events.OnRedirectToAuthorizationEndpoint = context =>
+        {
+            // Return a 401 status instead of redirecting to the Google OAuth endpoint.
+            // The client will handle the response and navigate to the login page/view.
+            if (context.Request.Path.HasValue && context.Request.Path.Value != "/auth/googlelogin")
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            }
+            else
+            {
+                context.Response.Redirect(context.RedirectUri);
+            }
+
+            return Task.CompletedTask;
+
+        };
+    });
 
 builder.Services.ConfigureApplicationCookie(options =>
 {

@@ -17,6 +17,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="7.0.5" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,11 +25,13 @@
     <None Remove="Helpers\" />
     <None Remove="Model\" />
     <None Remove="Database\" />
+    <None Remove="Helpers\Settings\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Middleware\" />
     <Folder Include="Helpers\" />
     <Folder Include="Model\" />
     <Folder Include="Database\" />
+    <Folder Include="Helpers\Settings\" />
   </ItemGroup>
 </Project>

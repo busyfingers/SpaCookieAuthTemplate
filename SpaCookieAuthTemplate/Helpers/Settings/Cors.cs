@@ -1,8 +1,8 @@
-﻿namespace SpaCookieAuthTemplate.Helpers
+﻿namespace SpaCookieAuthTemplate.Helpers.Settings
 {
     public class Cors
     {
-        public const string SectionName = "cors";
+        public const string SectionName = "Cors";
 
         public string[] Methods { get; set; }
         public string[] Origins { get; set; }
