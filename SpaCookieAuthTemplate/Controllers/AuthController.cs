@@ -116,67 +116,59 @@ namespace SpaCookieAuthTemplate.Controllers
         [HttpGet("googleresponse")]
         public async Task<IActionResult> GoogleResponse()
         {
-            // TODO: look for client url in querystring
-            // TODO: persist user e-mail/name in cookie
             var info = await signInManager.GetExternalLoginInfoAsync();
+            var email = info?.Principal.FindFirst(ClaimTypes.Email)?.Value;
 
-            if (info == null || info.Principal == null)
+            if (info == null || info.Principal == null || email == null)
             {
                 return StatusCode(StatusCodes.Status503ServiceUnavailable);
             }
 
+            IdentityUser? user;
             var result = await signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, true);
-            //string[] userInfo = { info.Principal.FindFirst(ClaimTypes.Name).Value, info.Principal.FindFirst(ClaimTypes.Email).Value };
-            var email = info.Principal.FindFirst(ClaimTypes.Email)?.Value;
-
-            if (email == null)
-            {
-                return StatusCode(StatusCodes.Status503ServiceUnavailable);
-            }
 
             if (result.Succeeded)
             {
-                var user = await userManager.FindByEmailAsync(email);
+                user = await userManager.FindByEmailAsync(email);
 
                 if (user == null)
                 {
                     return StatusCode(StatusCodes.Status500InternalServerError);
                 }
 
-                HttpContext.User = await signInManager.CreateUserPrincipalAsync(user);
-
-                TokenUtils.RefreshCSRFToken(antiforgery, HttpContext);
-
-                return RedirectToClient(email);
+                return await InitSessionAndReturn(user, email);
             }
-            else
-            {
-                var user = new IdentityUser
-                {
-                    Email = info.Principal.FindFirst(ClaimTypes.Email)!.Value,
-                    UserName = info.Principal.FindFirst(ClaimTypes.Email)!.Value
-                };
 
-                var identResult = await userManager.CreateAsync(user);
+            user = new IdentityUser
+            {
+                Email = info.Principal.FindFirst(ClaimTypes.Email)!.Value,
+                UserName = info.Principal.FindFirst(ClaimTypes.Email)!.Value
+            };
+
+            var identResult = await userManager.CreateAsync(user);
+
+            if (identResult.Succeeded)
+            {
+                identResult = await userManager.AddLoginAsync(user, info);
 
                 if (identResult.Succeeded)
                 {
-                    identResult = await userManager.AddLoginAsync(user, info);
-                    if (identResult.Succeeded)
-                    {
-                        await signInManager.SignInAsync(user, true);
+                    await signInManager.SignInAsync(user, true);
 
-                        HttpContext.User = await signInManager.CreateUserPrincipalAsync(user);
-
-                        TokenUtils.RefreshCSRFToken(antiforgery, HttpContext);
-
-                        return RedirectToClient(email);
-                    }
+                    return await InitSessionAndReturn(user, email);
                 }
-
-                return StatusCode(StatusCodes.Status401Unauthorized);
             }
 
+            return StatusCode(StatusCodes.Status401Unauthorized);
+        }
+
+        private async Task<IActionResult> InitSessionAndReturn(IdentityUser user, string email)
+        {
+            HttpContext.User = await signInManager.CreateUserPrincipalAsync(user);
+
+            TokenUtils.RefreshCSRFToken(antiforgery, HttpContext);
+
+            return RedirectToClient(email);
         }
 
         private IActionResult RedirectToClient(string email)
